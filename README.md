@@ -24,7 +24,7 @@ The current implementation is the P0 skeleton: local file-backed runs, determini
 From the repository root:
 
 ```bash
-/Users/joejiang/miniconda3/bin/python3.12 -m aw.cli
+python -m aw.cli
 ```
 
 Example interactive flow:
@@ -44,14 +44,14 @@ aw> exit
 Use the printed run id when calling direct commands:
 
 ```bash
-/Users/joejiang/miniconda3/bin/python3.12 -m aw.cli start "build a local-first note taking CLI"
-/Users/joejiang/miniconda3/bin/python3.12 -m aw.cli status run-YYYYMMDD-HHMMSS
-/Users/joejiang/miniconda3/bin/python3.12 -m aw.cli resume run-YYYYMMDD-HHMMSS
-/Users/joejiang/miniconda3/bin/python3.12 -m aw.cli show spec run-YYYYMMDD-HHMMSS
-/Users/joejiang/miniconda3/bin/python3.12 -m aw.cli approve run-YYYYMMDD-HHMMSS
-/Users/joejiang/miniconda3/bin/python3.12 -m aw.cli write plan run-YYYYMMDD-HHMMSS
-/Users/joejiang/miniconda3/bin/python3.12 -m aw.cli record-evidence run-YYYYMMDD-HHMMSS "pytest -q" --status passed --output "tests passed"
-/Users/joejiang/miniconda3/bin/python3.12 -m aw.cli evidence run-YYYYMMDD-HHMMSS
+python -m aw.cli start "build a local-first note taking CLI"
+python -m aw.cli status run-YYYYMMDD-HHMMSS
+python -m aw.cli resume run-YYYYMMDD-HHMMSS
+python -m aw.cli show spec run-YYYYMMDD-HHMMSS
+python -m aw.cli approve run-YYYYMMDD-HHMMSS
+python -m aw.cli write plan run-YYYYMMDD-HHMMSS
+python -m aw.cli record-evidence run-YYYYMMDD-HHMMSS "pytest -q" --status passed --output "tests passed"
+python -m aw.cli evidence run-YYYYMMDD-HHMMSS
 ```
 
 ## Run Protocol
@@ -82,7 +82,7 @@ This keeps the workflow inspectable, resumable, and easy to debug.
 Run the current test suite with:
 
 ```bash
-/Users/joejiang/miniconda3/bin/python3.12 -m pytest -q
+python -m pytest -q
 ```
 
 ## Project Docs
