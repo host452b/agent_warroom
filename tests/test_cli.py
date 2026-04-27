@@ -1,3 +1,6 @@
+import subprocess
+import sys
+
 from typer.testing import CliRunner
 
 from aw.cli import app
@@ -10,6 +13,19 @@ def test_help_displays_aw_commands():
     assert result.exit_code == 0
     assert "status" in result.output
     assert "resume" in result.output
+
+
+def test_module_help_displays_aw_commands():
+    result = subprocess.run(
+        [sys.executable, "-m", "aw.cli", "--help"],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+
+    assert result.returncode == 0
+    assert "status" in result.stdout
+    assert "resume" in result.stdout
 
 
 def test_status_shows_current_phase_and_gate(tmp_path):
