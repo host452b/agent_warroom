@@ -644,6 +644,13 @@ aw dashboard --port 8080 --runs-dir ./runs
 
 ## 12. 实施路线图
 
+### Phase 0 — Evaluation Gate（Week 0）
+
+- [ ] 按 `evaluation-plan.md` 跑 MVP eval
+- [ ] 对比 `B0`、`B1`、`B5`、`S`
+- [ ] 重点验证 `B5 vs S`，确认交叉 review 是否真的带来增益
+- [ ] 输出 cost-quality scatter、分层结果和继续/降级决策
+
 ### Phase 1 — CLI MVP（Week 1）
 
 - [ ] `aw` 交互式主进程
