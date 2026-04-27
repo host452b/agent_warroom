@@ -85,4 +85,4 @@ For `aw`, this means:
 - Keep file protocols small and inspectable before adding orchestration frameworks.
 - Treat dashboard visuals as observability for real gates and evidence, not cosmetic progress.
 - Prefer `quick` / `reviewed` / `dual` routing over one large universal pipeline.
-
+- In Brainstorming and Planning, do not choose a solution before current-era 3-candidate / 10-dimension scoring and horizontal comparison.

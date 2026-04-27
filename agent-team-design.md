@@ -120,9 +120,11 @@ aw abort run-20260427-a8f3c2
 ```text
 Intake
   -> Brainstorming
+  -> Current-Era Option Scoring
   -> Design Spec
   -> User Approval Gate
   -> Implementation Plan
+  -> Current-Era Plan Scoring
   -> Worktree Setup
   -> Task Execution (TDD)
   -> Review
@@ -146,17 +148,55 @@ Intake
 
 1. 探查当前 repo / docs / recent commits。
 2. 一次只问一个澄清问题。
-3. 给出 2-3 个方案和推荐。
-4. 按 section 展示设计。
-5. 用户逐段确认。
+3. 根据当前对话时间的年代和任务领域，识别 3 个当代主流方案。
+4. 为该领域定义 10 个选型维度和权重。
+5. 对 3 个方案逐项打分，计算加权总分，汇总 top1。
+6. 横向比较 3 个方案的适用条件、代价、风险和推荐理由。
+7. 按 section 展示设计。
+8. 用户逐段确认。
 
 产物：
 
 ```text
 docs/superpowers/specs/YYYY-MM-DD-<topic>-design.md
 runs/<run_id>/artifacts/spec.md
+runs/<run_id>/artifacts/brainstorm-option-matrix.md
 runs/<run_id>/decisions.jsonl
 ```
+
+### 4.2.1 Current-Era Option Scoring Gate
+
+Brainstorming 不能直接从单一路径开始。`aw` 必须先做一次当前年代选型扫描：
+
+```text
+1. Time context: 当前对话日期、技术年代、生态状态
+2. Domain: 本次任务所属领域
+3. Candidates: 该领域 3 个当代主流方案
+4. Dimensions: 该领域 10 个评估维度
+5. Scoring: 每个方案 1-5 分，可加权
+6. Top1: 加权最高方案
+7. Horizontal comparison: top1 与其他方案的横向取舍
+8. Recommendation: 推荐方案和不选其他方案的理由
+```
+
+10 个维度必须按领域定义，而不是固定模板。常见维度可以包括：
+
+- correctness / 成熟度
+- implementation complexity
+- maintainability
+- ecosystem fit
+- performance
+- observability
+- testability
+- cost / token / time
+- migration risk
+- user experience
+
+如果“3 个最流行方案”依赖实时生态信息，`aw` 必须记录来源或限制：
+
+- 有网络 / 可查文档时：引用当前资料。
+- 无网络或无法验证时：明确标记为基于当前模型知识和项目上下文的估计。
+- 如果流行度判断会影响重大决策：停下请求用户允许调研。
 
 ### 4.3 Phase: Design Approval Gate
 
@@ -173,6 +213,11 @@ Gate 条件：
 
 计划要足够具体，不能只写“实现功能”。
 
+进入 plan 前，必须再次做一次 plan-level 选型评分。它和 Brainstorming 的区别是：
+
+- Brainstorming 比较产品/架构方向。
+- Writing Plan 比较实施路径、工具组合、任务切分方式、验证策略。
+
 必须包含：
 
 - 文件结构。
@@ -187,7 +232,38 @@ Gate 条件：
 ```text
 docs/superpowers/plans/YYYY-MM-DD-<feature>.md
 runs/<run_id>/artifacts/plan.md
+runs/<run_id>/artifacts/plan-option-matrix.md
 ```
+
+### 4.4.1 Current-Era Plan Scoring Gate
+
+Plan 阶段也必须先做 3 方案 / 10 维度评分，再确定具体实施路径：
+
+```text
+Candidate A: 最小实现路径
+Candidate B: 标准工程路径
+Candidate C: 更完整但更重的路径
+```
+
+维度由任务领域决定，通常包括：
+
+- scope fit
+- implementation effort
+- regression risk
+- testability
+- rollout safety
+- compatibility with existing code
+- developer ergonomics
+- observability / debuggability
+- cost / runtime / token use
+- reversibility
+
+输出规则：
+
+- 先给评分表，再给 top1。
+- 再做横向对比，说明 top1 为什么比另外两个更适合当前任务。
+- 如果 top1 不是最高质量方案，而是最佳 ROI 方案，必须明说。
+- 如果三个方案分数接近，必须呈现权衡并请求用户选择。
 
 ### 4.5 Phase: Worktree Setup
 
@@ -485,8 +561,10 @@ MVP eval：
 ### Phase 2 — Brainstorming + Spec + Plan
 
 - [ ] 需求澄清 flow。
+- [ ] Brainstorm current-era 3 方案 / 10 维评分 gate。
 - [ ] design section approval gate。
 - [ ] 写入 `docs/superpowers/specs/`。
+- [ ] Plan current-era 3 方案 / 10 维评分 gate。
 - [ ] 写入 `docs/superpowers/plans/`。
 
 ### Phase 3 — Worktree + TDD Task Execution
