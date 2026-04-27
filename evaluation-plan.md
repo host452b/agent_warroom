@@ -1,20 +1,20 @@
-# Multi-Agent CLI Team Evaluation Plan
+# aw Strategy Evaluation Plan
 
-> 目的：在实现复杂的 `aw` 多 Agent pipeline 前，先验证核心假设：完整双 Agent 协商系统是否真的比更便宜的单 Agent / 简化双 Agent baseline 更好。
+> 目的：在把 `dual` strategy 放进 `aw` 默认工作流前，先验证它是否真的比更便宜的 `quick` / `reviewed` strategy 更好。`aw` 的主流程是 Superpowers-first；本评估只决定 multi-agent strategy 的启用范围。
 
 ---
 
 ## 1. 核心问题
 
-当前设计的每个决策都合理，但还没有实证：
+Dual strategy 的每个决策都合理，但还没有实证：
 
 - Claude + Codex 独立思考是否优于单 Agent？
 - 第三方合并是否提升质量，还是会折中稀释好答案？
 - 交叉 review 是否真的降低盲点，还是只是增加挑刺噪声？
 - 3 轮迭代的边际收益是否值得成本？
-- 完整系统 `S` 的质量提升能否抵消 5-10 倍 token / 时间成本？
+- 完整 dual strategy `S` 的质量提升能否抵消 5-10 倍 token / 时间成本？
 
-**评估目标不是证明 `S` 更好，而是尽早判断该不该继续投资。**
+**评估目标不是证明 `S` 更好，而是决定 `aw` 的 strategy router 什么时候该用它。**
 
 ---
 
@@ -56,11 +56,11 @@
 | B3 | Claude -> Codex 顺序接力，无独立思考 | 隔离“独立思考”变量 |
 | B4 | Dual 但只跑 1 round | 隔离“多轮迭代”变量 |
 | B5 | Dual 独立思考 + 合并 + 各自审自己 | 隔离“跨 Agent review”变量 |
-| S | 完整设计：独立思考 + 第三方合并 + 交叉 review + 最多 3 轮 | 待验证系统 |
+| S | 完整 dual strategy：独立思考 + 第三方合并 + 交叉 review + 最多 3 轮 | 待验证策略 |
 
 **最关键对比：`B5 vs S`**
 
-如果 `S` 对 `B5` 没有显著优势，说明“不同模型交叉 review”这个核心假设不成立，完整设计需要重审。
+如果 `S` 对 `B5` 没有显著优势，说明“不同模型交叉 review”这个核心假设不成立，`dual` 不应作为默认 strategy。
 
 ---
 
@@ -77,12 +77,12 @@
 目标时间: 周末两天内完成
 ```
 
-MVP 只验证四个系统：
+MVP 只验证四个 strategy candidates：
 
-- `B0`：最低成本 baseline
-- `B1`：控制算力后的单 Claude baseline
+- `B0`：最低成本 baseline，对应未来 `quick`
+- `B1`：控制算力后的单 Claude baseline，对应未来 `reviewed`
 - `B5`：去掉交叉 review 的 dual baseline
-- `S`：完整系统
+- `S`：完整 `dual`
 
 ---
 
@@ -375,17 +375,17 @@ MVP eval 后用这些规则决定下一步。
 
 | 结果 | 决策 |
 |------|------|
-| `S` 明显优于 `B5`，且复杂任务收益高 | 继续完整系统实现 |
-| `S` 只比 `B5` 小幅更好，但成本高很多 | 降低默认 round，保留 S 为复杂任务路径 |
+| `S` 明显优于 `B5`，且复杂任务收益高 | `dual` 可作为复杂任务 strategy |
+| `S` 只比 `B5` 小幅更好，但成本高很多 | 降低默认 round，`dual` 仅作为显式选择 |
 | `S` 不优于 `B5` | 去掉交叉 review 或重新设计 reviewer |
-| `B1` 接近 `S` | 单 Agent 自迭代作为默认，dual 作为升级路径 |
-| `B0` 在简单任务够好 | 加任务路由器，简单任务走 B0 |
+| `B1` 接近 `S` | `reviewed` 作为默认，`dual` 作为升级路径 |
+| `B0` 在简单任务够好 | `quick` 作为简单任务默认 |
 | round 2/3 改善很小 | max rounds 降到 2 或自适应停止 |
 | 合并器质量下降 | 改为“选择更优方案”而不是强制综合 |
 
 **默认继续条件：**
 
-`S` 在复杂任务上的 judge score 至少高于 `B5` 10%，并且 hidden test pass rate 不低于 `B5`，才值得继续把完整流程做成默认路径。
+`S` 在复杂任务上的 judge score 至少高于 `B5` 10%，并且 hidden test pass rate 不低于 `B5`，才值得让 `dual` 进入自动路由。否则 `dual` 只能通过用户显式选择启用。
 
 ---
 
@@ -393,14 +393,14 @@ MVP eval 后用这些规则决定下一步。
 
 - [ ] 固定 5 个 MVP task。
 - [ ] 为每个可自动评测任务写 hidden tests。
-- [ ] 实现 `B0`、`B1`、`B5`、`S` 四个 runner。
+- [ ] 实现 `B0`、`B1`、`B5`、`S` 四个 strategy runner。
 - [ ] 每个 `(task, system)` 跑 3 次。
 - [ ] 记录 calls、tokens、wall clock、artifact path。
 - [ ] 跑自动评测。
 - [ ] 对每个任务做匿名 pairwise judge。
 - [ ] 生成 cost-quality scatter。
 - [ ] 生成分层结果表。
-- [ ] 做结论：继续完整系统、降级默认路径，还是重审架构。
+- [ ] 做结论：`quick` / `reviewed` / `dual` 的默认路由范围。
 
 ---
 
@@ -413,4 +413,4 @@ MVP eval 后用这些规则决定下一步。
 | 合并器折中导致质量下降 | 改成“二选一 + 补充缺口” |
 | 跨 agent review 假阳性多 | 共识门改宽松，或加权 reviewer |
 | dual 方差比 single 大 | 检查 prompt 稳定性和合并规则 |
-| `S` 没显著优势 | 停止默认完整系统，实现更便宜 baseline |
+| `S` 没显著优势 | `dual` 不进默认路由，实现更便宜 baseline |
