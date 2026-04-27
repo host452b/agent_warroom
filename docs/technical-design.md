@@ -10,10 +10,12 @@ Core modules:
 - run manager
 - artifact registry
 - gate engine
-- strategy router
-- Claude/Codex adapters
 - evidence recorder
 - dashboard read model
+- strategy router
+- Claude/Codex adapters
+
+P0 only requires the first five modules plus enough status/resume support to read file-backed state. Strategy router and Claude/Codex adapters can be thin placeholders until P1.
 
 No database is required for MVP. JSON/JSONL files are the durable protocol.
 
@@ -84,6 +86,24 @@ Rules:
 - Markdown artifacts are for humans.
 - JSON/JSONL files are for machines and dashboard.
 - Dashboard must not infer business logic; it reads state, events, artifacts, and evidence.
+
+P0 required files:
+
+```text
+runs/run-{timestamp}/
+├── run-manifest.json
+├── state.json
+├── events.jsonl
+├── decisions.jsonl
+├── artifacts/
+│   ├── requirement.md
+│   ├── brainstorm-option-matrix.md
+│   ├── spec.md
+│   ├── plan-option-matrix.md
+│   └── plan.md
+└── evidence/
+    └── commands.jsonl
+```
 
 ## run-manifest.json
 
@@ -250,6 +270,19 @@ Dashboard displays:
 
 ## Roadmap
 
+### Phase P0 — Product Workflow Skeleton
+
+- interactive `aw` shell
+- create/resume run directory
+- write `run-manifest.json`, `state.json`, `events.jsonl`
+- write `artifacts/requirement.md`
+- generate or capture `brainstorm-option-matrix.md`
+- write `spec.md` and approve gate
+- generate or capture `plan-option-matrix.md`
+- write `plan.md` and approve gate
+- record one evidence command
+- `status`, `show spec`, `show plan`, `evidence`, `resume`
+
 ### Phase 0 — Evaluation Harness
 
 - fixed MVP task suite
@@ -300,4 +333,3 @@ Dashboard displays:
 - workflow strip
 - task board
 - evidence panel
-

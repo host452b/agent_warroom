@@ -118,21 +118,80 @@ Rationale:
 
 ## MVP Scope
 
-MVP includes:
+P0 proves one thing: `aw` can turn one agent coding request into a process with requirement, option scoring, spec, plan, gates, evidence, and resumability. It does not need to automatically complete a real software project.
+
+P0 includes:
 
 - interactive `aw` shell
 - run/state/events file protocol
 - Brainstorming with current-era 3-candidate / 10-dimension scoring
+- requirement artifact
 - product spec artifact
 - plan artifact with plan-level 3-candidate / 10-dimension scoring
-- worktree metadata
-- at least one task with RED/GREEN evidence capture
+- spec and plan approval gates
+- at least one evidence command recorded
 - `status`
 - `show spec`
 - `show plan`
 - `evidence`
 - `resume <run_id>`
-- read-only or static dashboard
+
+P1 can add:
+
+- automatic full TDD task execution
+- dashboard SSE
+- automatic worktree creation
+- review agent
+- PR / merge integration
+- replay mode
+- dual strategy
+
+## MVP Cut Line
+
+P0 stops at:
+
+```text
+natural language input
+-> requirement.md
+-> brainstorm-option-matrix.md
+-> spec.md + approval
+-> plan-option-matrix.md
+-> plan.md + approval
+-> one evidence command recorded
+-> status/evidence/resume works
+```
+
+P0 does not require:
+
+```text
+automatic full-code implementation
+automatic full test matrix
+automatic PR
+automatic multi-agent
+complex dashboard
+LangGraph orchestration
+```
+
+## Demo Scenario
+
+Use a deliberately small demo task:
+
+```text
+build a local-first note taking CLI
+```
+
+Successful demo path:
+
+1. `aw` creates a run.
+2. `aw` asks one clarification question.
+3. `aw` outputs 3-candidate / 10-dimension brainstorm scoring.
+4. `aw` generates `spec.md`.
+5. user approves spec.
+6. `aw` outputs 3-candidate / 10-dimension plan scoring.
+7. `aw` generates `plan.md`.
+8. user approves plan.
+9. `aw` records one evidence command, such as `pytest -q`.
+10. `status` and `evidence` explain the current state.
 
 ## Non-Goals
 
@@ -143,6 +202,10 @@ MVP does not include:
 - cloud PR agent
 - default multi-agent execution
 - autonomous large-scale code changes
+- automatic full-code implementation
+- automatic PR
+- complex dashboard
+- LangGraph orchestration
 - bypassing user approval
 - plugin marketplace
 - complex orchestration framework before file protocol is stable
@@ -159,4 +222,3 @@ MVP is successful when:
 - `evidence` explains why a step is considered complete
 - exiting and resuming restores the run
 - completion is impossible without evidence or explicit override
-

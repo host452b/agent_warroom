@@ -17,6 +17,23 @@ Intake
   -> Finish Decision
 ```
 
+## P0 Flow
+
+P0 implements a narrower path:
+
+```text
+Natural language input
+  -> requirement.md
+  -> brainstorm-option-matrix.md
+  -> spec.md
+  -> spec approval
+  -> plan-option-matrix.md
+  -> plan.md
+  -> plan approval
+  -> record one evidence command
+  -> status / evidence / resume
+```
+
 ## Interactive Commands
 
 | Command | Purpose |
@@ -38,6 +55,20 @@ Intake
 | `open dashboard` | open dashboard |
 | `help` | show available commands |
 | `exit` | exit interactive shell |
+
+P0 command subset:
+
+| Command | P0 behavior |
+|---------|-------------|
+| natural language input | create run and write requirement artifact |
+| `status` | show current phase, gate, and missing evidence |
+| `approve` | approve spec or plan gates |
+| `show spec` | print `artifacts/spec.md` |
+| `write plan` | write plan scoring and plan artifacts |
+| `show plan` | print `artifacts/plan.md` |
+| `evidence` | show recorded evidence |
+| `resume <run_id>` | restore existing run |
+| `exit` | exit without losing run state |
 
 Shortcut commands:
 
@@ -143,6 +174,8 @@ Required evidence:
 ### Execute
 
 Runs plan tasks using TDD.
+
+P0 only needs to record one evidence command. Full automatic TDD task execution is P1.
 
 Gates:
 
@@ -257,4 +290,3 @@ Evidence:
 - 0 blocking findings
 - 3 tasks completed
 ```
-
