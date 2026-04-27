@@ -121,13 +121,13 @@ Brainstorm -> Plan -> Specs -> Implement -> Review <-> Test -> Retrospective
 
 | # | 阶段 | 输入 | 产物 | 主 Agent |
 |---|------|------|------|---------|
-| 1 | Brainstorm | `requirement.md` | `ideas.md` | Claude（+ Gemini 可选） |
+| 1 | Brainstorm | `requirement.md` | `ideas.md` | Claude |
 | 2 | Plan | `ideas.md` | `plan.md` | Claude |
 | 3 | Specs | `plan.md` | `specs.md` | Claude |
 | 4 | Implement | `specs.md` | `src/*` | Codex 主 / Claude 备 |
 | 5 | Review | `src/* + specs.md` | `review.md` | Claude（≠ 实现者） |
 | 6 | Test | `src/* + specs.md` | `tests/*` | Codex 写 + Claude 设计 case |
-| 7 | Retrospective | 全部 artifacts | `retro.md` | Gemini / Claude 长 context |
+| 7 | Retrospective | 全部 artifacts | `retro.md` | Claude |
 
 **反馈环**
 
@@ -459,7 +459,7 @@ app.invoke({
 | Claude session 过期 | 重建 session，注入历史摘要重建上下文 |
 | 3 轮无共识 | 采纳最新 merged，写 dispute.log，由 retrospective 重点关注 |
 | 单次调用超时 | 重试 3 次，失败 escalate 到人工 |
-| Token 超限 | 切换到 Gemini（长 context）作为 fallback |
+| Token 超限 | 生成历史摘要，缩小输入 artifact 范围，必要时请求人工裁剪 |
 | 反馈环往返 > 5 次 | 强制 break，标记需人工干预 |
 | CLI 进程崩溃 | 记录现场，从 LangGraph checkpoint 恢复 |
 | `aw` 交互式主进程退出 | 保留当前 run 状态，允许 `aw` 后 `resume <run_id>` |
@@ -727,7 +727,6 @@ aw dashboard --port 8080 --runs-dir ./runs
 
 ## 附录 C：未来扩展
 
-- **多模型扩容**：引入 Gemini（长 context 任务）、本地 Llama（隐私敏感任务）
 - **人工 in-the-loop**：每个 stage 通过后可选人工 approve
 - **学习与适配**：dispute.log 自动转化为 fine-tuning 数据，迭代 prompt 模板
 - **并行多分支**：同一需求同时跑多个 brainstorm 路径，让 retrospective 选最优
