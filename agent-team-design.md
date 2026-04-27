@@ -38,6 +38,19 @@
 | Evidence over claims | `aw` 只有看到测试/检查/人工 approval 证据后才标记完成 |
 | YAGNI / DRY | 默认拒绝未被 spec 或 plan 支撑的扩展 |
 
+## 2.1 Project Rule Skill: Karpathy Philosophy
+
+本 repo 额外定义一个项目级 rule skill：`skills/karpathy-philosophy/SKILL.md`。
+
+它约束所有 `aw` 相关设计和实现：
+
+- **编码前思考**：不要隐藏假设；困惑时停下；存在多种解释时先呈现。
+- **简洁优先**：不加未要求功能；不为一次性逻辑创建抽象；避免臃肿架构。
+- **精准修改**：每一行修改都必须能追溯到用户请求；不顺手重构相邻代码。
+- **目标驱动执行**：先定义可验证成功标准，再循环执行直到满足证据。
+
+这个 rule skill 是 Superpowers 哲学的本项目落地层。Superpowers 提供流程骨架，Karpathy Philosophy 约束单次 agent 行为质量。
+
 ---
 
 ## 3. CLI 产品形态：aw
