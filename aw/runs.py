@@ -61,3 +61,8 @@ def create_run(runs_dir: Path, requirement: str, now: str) -> RunRef:
     (run_path / "decisions.jsonl").write_text("", encoding="utf-8")
     append_event(run_path, {"ts": now, "event": "run_created", "run_id": run_id})
     return RunRef(run_id=run_id, path=run_path)
+
+
+def load_state(runs_dir: Path, run_id: str) -> dict:
+    state_path = runs_dir / run_id / "state.json"
+    return json.loads(state_path.read_text(encoding="utf-8"))
