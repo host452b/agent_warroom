@@ -36,6 +36,7 @@ aw> show spec
 aw> approve
 aw> write plan
 aw> show plan
+aw> resume run-YYYYMMDD-HHMMSS
 aw> evidence
 aw> exit
 ```
@@ -45,6 +46,7 @@ Use the printed run id when calling direct commands:
 ```bash
 /Users/joejiang/miniconda3/bin/python3.12 -m aw.cli start "build a local-first note taking CLI"
 /Users/joejiang/miniconda3/bin/python3.12 -m aw.cli status run-YYYYMMDD-HHMMSS
+/Users/joejiang/miniconda3/bin/python3.12 -m aw.cli resume run-YYYYMMDD-HHMMSS
 /Users/joejiang/miniconda3/bin/python3.12 -m aw.cli show spec run-YYYYMMDD-HHMMSS
 /Users/joejiang/miniconda3/bin/python3.12 -m aw.cli approve run-YYYYMMDD-HHMMSS
 /Users/joejiang/miniconda3/bin/python3.12 -m aw.cli write plan run-YYYYMMDD-HHMMSS

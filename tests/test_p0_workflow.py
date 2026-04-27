@@ -1,6 +1,9 @@
+from pathlib import Path
+
 from typer.testing import CliRunner
 
 from aw.cli import app
+from aw.runs import create_run
 
 
 def test_start_creates_requirement_scoring_and_spec(tmp_path):
@@ -39,6 +42,23 @@ def test_interactive_shell_creates_run_from_natural_language():
 
     assert result.exit_code == 0
     assert "Started run-" in result.output
+    assert "Phase: spec" in result.output
+    assert "# Spec" in result.output
+
+
+def test_interactive_shell_resumes_existing_run():
+    runner = CliRunner()
+
+    with runner.isolated_filesystem():
+        run = create_run(Path("runs"), "build notes", "2026-04-27T15:30:00+08:00")
+        result = runner.invoke(
+            app,
+            [],
+            input=f"resume {run.run_id}\nstatus\nshow spec\nexit\n",
+        )
+
+    assert result.exit_code == 0
+    assert f"Resumed {run.run_id}" in result.output
     assert "Phase: spec" in result.output
     assert "# Spec" in result.output
 
@@ -131,6 +151,11 @@ def test_approve_records_gate_evidence(tmp_path):
     assert "Approved spec_approved" in result.output
     assert "spec_approved" in (run_path / "evidence" / "approvals.jsonl").read_text()
     assert '"status": "passed"' in (run_path / "state.json").read_text()
+
+    evidence = runner.invoke(app, ["evidence", run_id, "--runs-dir", str(tmp_path)])
+
+    assert evidence.exit_code == 0
+    assert "approval: spec_approved" in evidence.output
 
 
 def test_record_evidence_updates_evidence_output(tmp_path):

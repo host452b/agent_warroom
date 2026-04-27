@@ -56,6 +56,13 @@ def run_shell(runs_dir: Path = Path("runs")) -> None:
             else:
                 typer.echo("No active run")
             continue
+        if line.startswith("resume "):
+            run_id = line.split(maxsplit=1)[1].strip()
+            state = load_state(runs_dir, run_id)
+            current_run_id = state["run_id"]
+            typer.echo(f"Resumed {state['run_id']}")
+            typer.echo(f"Phase: {state['current_phase']}")
+            continue
         if line == "show spec":
             if current_run_id:
                 show_spec(current_run_id, runs_dir)
@@ -184,14 +191,27 @@ def record_evidence(
 
 @app.command()
 def evidence(run_id: str, runs_dir: Path = typer.Option(Path("runs"), "--runs-dir")) -> None:
-    """Show recorded command evidence."""
-    path = _run_path(runs_dir, run_id) / "evidence" / "commands.jsonl"
-    if not path.exists() or not path.read_text(encoding="utf-8").strip():
-        typer.echo("No command evidence recorded")
+    """Show recorded evidence."""
+    evidence_dir = _run_path(runs_dir, run_id) / "evidence"
+    printed = False
+
+    approvals_path = evidence_dir / "approvals.jsonl"
+    if approvals_path.exists():
+        for line in approvals_path.read_text(encoding="utf-8").splitlines():
+            entry = json.loads(line)
+            typer.echo(f"approval: {entry['gate']}")
+            printed = True
+
+    commands_path = evidence_dir / "commands.jsonl"
+    if commands_path.exists():
+        for line in commands_path.read_text(encoding="utf-8").splitlines():
+            entry = json.loads(line)
+            typer.echo(f"{entry['status']}: {entry['command']}")
+            printed = True
+
+    if not printed:
+        typer.echo("No evidence recorded")
         return
-    for line in path.read_text(encoding="utf-8").splitlines():
-        entry = json.loads(line)
-        typer.echo(f"{entry['status']}: {entry['command']}")
 
 
 def main() -> None:
