@@ -1,0 +1,781 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Agent Team Dashboard</title>
+<script src="https://cdn.jsdelivr.net/npm/markdown-it@14.0.0/dist/markdown-it.min.js"></script>
+<style>
+  :root {
+    --bg: #fafaf7;
+    --surface: #ffffff;
+    --surface-2: #f1efe8;
+    --text: #2c2c2a;
+    --text-2: #73726c;
+    --text-3: #9c9a92;
+    --border: rgba(0,0,0,0.08);
+    --border-2: rgba(0,0,0,0.15);
+    --mono: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+    --sans: -apple-system, 'Segoe UI', system-ui, sans-serif;
+    --radius: 8px;
+    --radius-lg: 12px;
+    --c-running: #EF9F27;
+    --c-running-bg: #FAEEDA;
+    --c-pass: #1D9E75;
+    --c-pass-bg: #E1F5EE;
+    --c-fail: #E24B4A;
+    --c-fail-bg: #FCEBEB;
+    --c-pending: #B4B2A9;
+    --c-pending-bg: #F1EFE8;
+    --c-dispute: #7F77DD;
+    --c-dispute-bg: #EEEDFE;
+    --c-claude: #534AB7;
+    --c-claude-bg: #EEEDFE;
+    --c-codex: #0F6E56;
+    --c-codex-bg: #E1F5EE;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #1a1a18;
+      --surface: #232321;
+      --surface-2: #2c2c2a;
+      --text: #e8e6e0;
+      --text-2: #b4b2a9;
+      --text-3: #888780;
+      --border: rgba(255,255,255,0.08);
+      --border-2: rgba(255,255,255,0.15);
+      --c-running-bg: #412402;
+      --c-pass-bg: #04342C;
+      --c-fail-bg: #501313;
+      --c-pending-bg: #2C2C2A;
+      --c-dispute-bg: #26215C;
+      --c-claude-bg: #3C3489;
+      --c-codex-bg: #085041;
+    }
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: var(--sans);
+    background: var(--bg);
+    color: var(--text);
+    font-size: 14px;
+    line-height: 1.6;
+  }
+  .container { max-width: 1100px; margin: 0 auto; padding: 32px 24px 64px; }
+
+  header {
+    display: flex; align-items: center; gap: 16px; flex-wrap: wrap;
+    padding-bottom: 20px; border-bottom: 0.5px solid var(--border);
+    margin-bottom: 24px;
+  }
+  h1 { font-size: 20px; font-weight: 500; }
+  .run-id { font-family: var(--mono); font-size: 12px; color: var(--text-2); }
+  .badge {
+    font-size: 11px; padding: 3px 10px; border-radius: var(--radius);
+    font-weight: 500;
+  }
+  .badge.running { background: var(--c-running-bg); color: var(--c-running); }
+  .badge.pass { background: var(--c-pass-bg); color: var(--c-pass); }
+  .badge.fail { background: var(--c-fail-bg); color: var(--c-fail); }
+  .badge.pending { background: var(--c-pending-bg); color: var(--text-2); }
+  .badge.dispute { background: var(--c-dispute-bg); color: var(--c-dispute); }
+  .badge .dot {
+    display: inline-block; width: 6px; height: 6px; border-radius: 50%;
+    background: currentColor; margin-right: 4px; vertical-align: middle;
+  }
+  .badge.running .dot { animation: pulse 1.4s ease-in-out infinite; }
+  @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.3; } }
+  .header-spacer { flex: 1; }
+  .header-meta {
+    display: flex; gap: 16px; font-size: 12px; color: var(--text-2);
+  }
+  .header-meta strong { color: var(--text); font-weight: 500; }
+
+  .pipeline {
+    background: var(--surface);
+    border: 0.5px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 24px 28px;
+    margin-bottom: 24px;
+  }
+  .pipeline-title {
+    font-size: 12px; color: var(--text-2); margin-bottom: 16px;
+    text-transform: uppercase; letter-spacing: 0.06em;
+  }
+  .stages-strip {
+    display: flex; align-items: flex-start; gap: 0;
+    overflow-x: auto;
+  }
+  .stage-pill {
+    flex: 1; min-width: 100px;
+    display: flex; flex-direction: column; align-items: center;
+    position: relative;
+    cursor: pointer;
+    transition: transform 0.15s;
+  }
+  .stage-pill:hover { transform: translateY(-2px); }
+  .stage-pill::after {
+    content: '';
+    position: absolute;
+    top: 14px;
+    left: calc(50% + 16px);
+    right: calc(-50% + 16px);
+    height: 1px;
+    background: var(--border-2);
+  }
+  .stage-pill:last-child::after { display: none; }
+  .stage-dot {
+    width: 28px; height: 28px;
+    border-radius: 50%;
+    background: var(--c-pending-bg);
+    border: 2px solid var(--c-pending);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 11px; font-weight: 500; color: var(--text-2);
+    z-index: 1; position: relative;
+  }
+  .stage-pill.passed .stage-dot { background: var(--c-pass-bg); border-color: var(--c-pass); color: var(--c-pass); }
+  .stage-pill.passed::after { background: var(--c-pass); }
+  .stage-pill.running .stage-dot { background: var(--c-running-bg); border-color: var(--c-running); color: var(--c-running); animation: pulse 1.4s ease-in-out infinite; }
+  .stage-pill.dispute .stage-dot { background: var(--c-dispute-bg); border-color: var(--c-dispute); color: var(--c-dispute); }
+  .stage-pill.fail .stage-dot { background: var(--c-fail-bg); border-color: var(--c-fail); color: var(--c-fail); }
+  .stage-name { margin-top: 8px; font-size: 12px; color: var(--text-2); font-weight: 500; }
+  .stage-meta { font-size: 10px; color: var(--text-3); margin-top: 2px; }
+
+  .activity {
+    background: var(--surface);
+    border: 0.5px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 20px 24px;
+    margin-bottom: 24px;
+  }
+  .activity-header {
+    display: flex; align-items: center; gap: 12px;
+    margin-bottom: 16px;
+  }
+  .activity-title { font-size: 15px; font-weight: 500; }
+  .activity-flow {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 12px;
+  }
+  .role-card {
+    background: var(--surface-2);
+    border-radius: var(--radius);
+    padding: 12px 14px;
+    font-size: 12px;
+  }
+  .role-card.claude { background: var(--c-claude-bg); }
+  .role-card.codex { background: var(--c-codex-bg); }
+  .role-name { font-weight: 500; margin-bottom: 4px; }
+  .role-card.claude .role-name { color: var(--c-claude); }
+  .role-card.codex .role-name { color: var(--c-codex); }
+  @media (prefers-color-scheme: dark) {
+    .role-card.claude .role-name { color: #CECBF6; }
+    .role-card.codex .role-name { color: #9FE1CB; }
+  }
+  .role-status {
+    display: inline-flex; align-items: center; gap: 6px;
+    font-size: 11px; color: var(--text-2);
+  }
+  .role-status::before {
+    content: ''; width: 6px; height: 6px; border-radius: 50%;
+    background: var(--text-3);
+  }
+  .role-status.thinking::before { background: var(--c-running); animation: pulse 1.4s ease-in-out infinite; }
+  .role-status.done::before { background: var(--c-pass); }
+  .activity-merge, .activity-review {
+    background: var(--surface-2);
+    border-radius: var(--radius);
+    padding: 12px 14px;
+    font-size: 12px;
+    margin-top: 8px;
+    display: flex; justify-content: space-between; align-items: center;
+  }
+  .activity-merge.idle, .activity-review.idle { opacity: 0.4; }
+
+  .stages-list { display: flex; flex-direction: column; gap: 12px; }
+  .stage-card {
+    background: var(--surface);
+    border: 0.5px solid var(--border);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+  }
+  .stage-card-header {
+    padding: 16px 24px;
+    display: flex; align-items: center; gap: 14px;
+    cursor: pointer;
+    user-select: none;
+    transition: background 0.15s;
+  }
+  .stage-card-header:hover { background: var(--surface-2); }
+  .stage-icon {
+    width: 24px; height: 24px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 11px; font-weight: 500;
+    flex-shrink: 0;
+  }
+  .stage-icon.pending { background: var(--c-pending-bg); color: var(--text-2); }
+  .stage-icon.running { background: var(--c-running-bg); color: var(--c-running); }
+  .stage-icon.passed { background: var(--c-pass-bg); color: var(--c-pass); }
+  .stage-icon.fail { background: var(--c-fail-bg); color: var(--c-fail); }
+  .stage-icon.dispute { background: var(--c-dispute-bg); color: var(--c-dispute); }
+  .stage-card-title { font-size: 15px; font-weight: 500; }
+  .stage-card-sub { font-size: 12px; color: var(--text-2); margin-left: 4px; }
+  .stage-spacer { flex: 1; }
+  .stage-toggle {
+    color: var(--text-3); font-size: 14px;
+    transition: transform 0.2s;
+  }
+  .stage-card.expanded .stage-toggle { transform: rotate(90deg); }
+  .stage-card-body {
+    display: none;
+    padding: 0 24px 20px;
+    border-top: 0.5px solid var(--border);
+  }
+  .stage-card.expanded .stage-card-body { display: block; }
+
+  .rounds-tabs {
+    display: flex; gap: 4px;
+    margin: 16px 0;
+    border-bottom: 0.5px solid var(--border);
+  }
+  .round-tab {
+    background: none; border: none; color: var(--text-2);
+    padding: 8px 14px; font-size: 13px; cursor: pointer;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -1px;
+    font-family: inherit;
+  }
+  .round-tab:hover { color: var(--text); }
+  .round-tab.active { color: var(--text); border-bottom-color: var(--text); font-weight: 500; }
+  .round-tab .round-verdict {
+    display: inline-block; margin-left: 6px;
+    font-size: 10px; padding: 1px 6px; border-radius: var(--radius);
+  }
+  .round-tab .round-verdict.pass { background: var(--c-pass-bg); color: var(--c-pass); }
+  .round-tab .round-verdict.fail { background: var(--c-fail-bg); color: var(--c-fail); }
+
+  .round-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+  @media (max-width: 720px) {
+    .round-grid { grid-template-columns: 1fr; }
+  }
+  .panel {
+    background: var(--surface-2);
+    border-radius: var(--radius);
+    padding: 14px 16px;
+    font-size: 13px;
+  }
+  .panel.full { grid-column: 1 / -1; }
+  .panel.merged { background: var(--c-pending-bg); border-left: 3px solid var(--text-2); }
+  .panel.review-pass { border-left: 3px solid var(--c-pass); }
+  .panel.review-fail { border-left: 3px solid var(--c-fail); }
+  .panel-header {
+    display: flex; align-items: center; gap: 8px;
+    font-size: 11px; color: var(--text-2);
+    text-transform: uppercase; letter-spacing: 0.06em;
+    font-weight: 500;
+    margin-bottom: 8px;
+  }
+  .panel-header.claude { color: var(--c-claude); }
+  .panel-header.codex { color: var(--c-codex); }
+  @media (prefers-color-scheme: dark) {
+    .panel-header.claude { color: #CECBF6; }
+    .panel-header.codex { color: #9FE1CB; }
+  }
+  .panel-content {
+    font-size: 12.5px; line-height: 1.65;
+    color: var(--text);
+    max-height: 300px; overflow-y: auto;
+  }
+  .panel-content h1, .panel-content h2, .panel-content h3 {
+    font-size: 14px; font-weight: 500; margin: 8px 0 4px;
+  }
+  .panel-content p { margin: 4px 0; }
+  .panel-content ul, .panel-content ol { margin: 4px 0 4px 20px; }
+  .panel-content code {
+    font-family: var(--mono); font-size: 11.5px;
+    background: var(--bg); padding: 1px 5px; border-radius: 3px;
+  }
+  .panel-content pre {
+    background: var(--bg); padding: 8px 10px; border-radius: 4px;
+    overflow-x: auto; font-size: 11.5px; margin: 4px 0;
+  }
+  .verdict-badge {
+    display: inline-block; font-size: 10px;
+    padding: 1px 6px; border-radius: var(--radius);
+    margin-left: auto; font-weight: 500;
+  }
+
+  .final-output {
+    margin-top: 16px;
+    background: var(--c-pass-bg);
+    border-radius: var(--radius);
+    padding: 14px 16px;
+  }
+  .final-output .panel-header { color: var(--c-pass); }
+  .final-output .panel-content { max-height: 240px; }
+
+  .stats {
+    margin-top: 32px;
+    background: var(--surface);
+    border: 0.5px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 20px 24px;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 16px;
+  }
+  .stat-block {
+    display: flex; flex-direction: column;
+  }
+  .stat-label {
+    font-size: 11px; color: var(--text-2);
+    text-transform: uppercase; letter-spacing: 0.06em;
+    margin-bottom: 4px;
+  }
+  .stat-value {
+    font-size: 22px; font-weight: 500;
+  }
+  .stat-sub { font-size: 11px; color: var(--text-3); margin-top: 2px; }
+
+  .pending-msg {
+    color: var(--text-2);
+    font-size: 13px;
+    padding: 12px 0;
+  }
+
+  .mock-controls {
+    position: fixed; bottom: 16px; right: 16px;
+    background: var(--surface); border: 0.5px solid var(--border-2);
+    border-radius: var(--radius); padding: 8px;
+    display: flex; gap: 6px; z-index: 100;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+  }
+  .mock-controls button {
+    background: var(--surface-2); border: 0.5px solid var(--border);
+    color: var(--text); font-family: inherit; font-size: 11px;
+    padding: 4px 10px; border-radius: 4px; cursor: pointer;
+  }
+  .mock-controls button:hover { background: var(--border); }
+  .mock-controls button.active { background: var(--text); color: var(--bg); }
+</style>
+</head>
+<body>
+<div class="container">
+  <header>
+    <h1>Agent Team Run</h1>
+    <span class="run-id" id="runId">run-20260427-a8f3c2</span>
+    <span class="badge running" id="statusBadge">
+      <span class="dot"></span><span id="statusText">Running</span>
+    </span>
+    <div class="header-spacer"></div>
+    <div class="header-meta">
+      <span>Started <strong id="startedAt">2 min ago</strong></span>
+      <span>Elapsed <strong id="elapsed">2m 14s</strong></span>
+    </div>
+  </header>
+
+  <section class="pipeline">
+    <div class="pipeline-title">Pipeline progress</div>
+    <div class="stages-strip" id="stagesStrip"></div>
+  </section>
+
+  <section class="activity" id="activitySection">
+    <div class="activity-header">
+      <span class="activity-title" id="activityTitle">Currently running: Review · round 2 of 3</span>
+    </div>
+    <div class="activity-flow">
+      <div class="role-card claude">
+        <div class="role-name">Claude thinker</div>
+        <div class="role-status done" id="claudeThinkerStatus">Done · 4.2s · 1240 tok</div>
+      </div>
+      <div class="role-card codex">
+        <div class="role-name">Codex thinker</div>
+        <div class="role-status thinking" id="codexThinkerStatus">Thinking… 3.1s</div>
+      </div>
+    </div>
+    <div class="activity-merge idle" id="mergeRow">
+      <span>Synthesizer</span>
+      <span style="color: var(--text-3); font-size: 11px;">Waiting for both thinkers</span>
+    </div>
+    <div class="activity-review idle" id="reviewRow">
+      <span>Joint review</span>
+      <span style="color: var(--text-3); font-size: 11px;">Pending</span>
+    </div>
+  </section>
+
+  <section class="stages-list" id="stagesList"></section>
+
+  <footer class="stats">
+    <div class="stat-block">
+      <span class="stat-label">LLM calls</span>
+      <span class="stat-value" id="statCalls">23</span>
+      <span class="stat-sub">across 4 stages</span>
+    </div>
+    <div class="stat-block">
+      <span class="stat-label">Total elapsed</span>
+      <span class="stat-value" id="statElapsed">2m 14s</span>
+      <span class="stat-sub">~3m projected</span>
+    </div>
+    <div class="stat-block">
+      <span class="stat-label">Avg rounds</span>
+      <span class="stat-value" id="statRounds">1.5</span>
+      <span class="stat-sub">per stage</span>
+    </div>
+    <div class="stat-block">
+      <span class="stat-label">Disputes</span>
+      <span class="stat-value" id="statDisputes">0</span>
+      <span class="stat-sub">no force-pass</span>
+    </div>
+    <div class="stat-block">
+      <span class="stat-label">Token estimate</span>
+      <span class="stat-value" id="statTokens">28k</span>
+      <span class="stat-sub">in / 12k out</span>
+    </div>
+  </footer>
+</div>
+
+<div class="mock-controls">
+  <span style="font-size: 11px; color: var(--text-2); padding: 4px 6px;">Mock state:</span>
+  <button data-state="running" class="active">Running</button>
+  <button data-state="completed">Completed</button>
+  <button data-state="dispute">With dispute</button>
+</div>
+
+<script>
+const md = window.markdownit({ html: false, breaks: true, linkify: true });
+
+const STAGES = [
+  { name: 'brainstorm', label: 'Brainstorm' },
+  { name: 'plan', label: 'Plan' },
+  { name: 'specs', label: 'Specs' },
+  { name: 'implement', label: 'Implement' },
+  { name: 'review', label: 'Review' },
+  { name: 'test', label: 'Test' },
+  { name: 'retrospective', label: 'Retrospective' },
+];
+
+const MOCK_RUNNING = {
+  status: 'running',
+  current_stage: 'review',
+  current_round: 2,
+  elapsed: '2m 14s',
+  stats: { calls: 23, elapsed: '2m 14s', rounds: 1.5, disputes: 0, tokens_in: 28000, tokens_out: 12000 },
+  stages: {
+    brainstorm: {
+      status: 'passed',
+      rounds: [
+        {
+          round: 1, verdict: 'pass',
+          claude: '## Brainstorm: 实时数据看板\n\n**核心方向**\n- 多源数据聚合（数据库、API、消息队列）\n- 实时更新（WebSocket / SSE）\n- 多维度切片（时间、地区、产品线）\n\n**潜在挑战**\n- 高并发下的数据一致性\n- 跨时区显示\n- 历史数据回放',
+          codex: '## Ideas for dashboard\n\n- 用户能配置自己的 widgets\n- 移动端响应式\n- 异常告警自动弹出\n- 支持导出 CSV / PNG\n- 权限分层（admin / viewer / editor）\n- 缓存策略：5s / 1min / 1h 三级',
+          merged: '## 综合 brainstorm 结果\n\n### 双方共识\n- 实时更新机制（WebSocket）\n- 多维度数据切片\n- 异常告警\n\n### Claude 独有\n- 跨时区显示策略\n- 历史数据回放\n\n### Codex 独有\n- 用户自定义 widgets\n- 三级缓存策略\n- 权限分层\n\n### 综合建议\n以上要点全部纳入 plan 阶段细化。',
+          claude_crit: 'VERDICT: PASS\nREASONS:\n- 覆盖了用户需求的核心\n- 双方互补性好',
+          codex_crit: 'VERDICT: PASS\nREASONS:\n- Comprehensive coverage\n- Good split between consensus and unique',
+        }
+      ],
+      final: '完整的 brainstorm 产物已合并保存',
+    },
+    plan: {
+      status: 'passed',
+      rounds: [
+        {
+          round: 1, verdict: 'fail',
+          claude: '阶段化 plan...',
+          codex: '不同的拆分方式...',
+          merged: '合并 v1...',
+          claude_crit: 'VERDICT: NEEDS_REVISION\nREASONS:\n- 缺少里程碑\n- 风险评估不充分',
+          codex_crit: 'VERDICT: PASS',
+        },
+        {
+          round: 2, verdict: 'pass',
+          claude: '## Plan v2\n\n### Milestones\n1. **Week 1** — 数据采集层 + 基础 API\n2. **Week 2** — 前端 widget 框架\n3. **Week 3** — 实时推送 + 告警\n4. **Week 4** — 权限系统 + 集成测试\n\n### 风险\n- WebSocket 连接稳定性 (高)\n- 历史数据迁移 (中)',
+          codex: '## Refined plan\n\n- 4-week timeline\n- Frontend / Backend / Infra parallel tracks\n- Risk register: connection stability, data migration',
+          merged: '## Final plan v2\n\n### 4-Week Timeline\n\n| Week | Backend | Frontend | Infra |\n|------|---------|----------|-------|\n| 1 | 数据采集 | 项目脚手架 | DB + Redis |\n| 2 | API 层 | Widget 框架 | WebSocket |\n| 3 | 告警引擎 | 实时推送集成 | 监控 |\n| 4 | 权限 | 完整集成 | 部署 |\n\n### 风险登记\n1. WebSocket 稳定性 (P1)\n2. 历史数据迁移 (P2)\n3. 跨时区一致性 (P2)',
+          claude_crit: 'VERDICT: PASS\nREASONS:\n- 时间线清晰\n- 风险登记完整',
+          codex_crit: 'VERDICT: PASS\nREASONS:\n- Well structured\n- Realistic timeline',
+        }
+      ],
+      final: '综合 plan v2',
+    },
+    specs: {
+      status: 'passed',
+      rounds: [
+        {
+          round: 1, verdict: 'pass',
+          claude: '## API Specs\n\n### GET /api/dashboards/:id\n返回：仪表板配置\n\n### POST /api/widgets\n创建新 widget',
+          codex: '### Spec: REST endpoints\n\n- `GET /dashboards/:id`\n- `POST /widgets`\n- `WS /stream/:dashboard_id`',
+          merged: '## Final Specs\n\n### REST Endpoints\n\n```\nGET    /api/dashboards/:id\nPOST   /api/widgets\nDELETE /api/widgets/:id\nWS     /api/stream/:dashboard_id\n```\n\n### Data Models\n- `Dashboard { id, name, owner, widgets[] }`\n- `Widget { id, type, config, query }`\n\n### 边界条件\n- WS 断连后 5s 内自动重连\n- 单仪表板最多 20 个 widgets',
+          claude_crit: 'VERDICT: PASS',
+          codex_crit: 'VERDICT: PASS',
+        }
+      ],
+      final: 'Specs final',
+    },
+    implement: {
+      status: 'passed',
+      rounds: [
+        {
+          round: 1, verdict: 'pass',
+          claude: '由 Codex 主导，Claude 评估架构合理性',
+          codex: '```python\nfrom fastapi import FastAPI, WebSocket\n\napp = FastAPI()\n\n@app.get("/api/dashboards/{id}")\nasync def get_dashboard(id: str):\n    return await db.dashboards.find_one({"id": id})\n\n@app.websocket("/api/stream/{id}")\nasync def stream(ws: WebSocket, id: str):\n    await ws.accept()\n    async for update in subscribe(id):\n        await ws.send_json(update)\n```',
+          merged: '## 实现产物\n\n按 Codex 主导的代码框架实现，Claude 补充了：\n\n- 错误处理中间件\n- WS 断连重试逻辑\n- 单元测试 stub\n\n所有代码已写入 `./src/`',
+          claude_crit: 'VERDICT: PASS\nREASONS:\n- 代码结构清晰\n- 异步处理得当',
+          codex_crit: 'VERDICT: PASS',
+        }
+      ],
+      final: '`src/` 目录写入完成',
+    },
+    review: {
+      status: 'running',
+      rounds: [],
+      final: null,
+    },
+    test: { status: 'pending', rounds: [], final: null },
+    retrospective: { status: 'pending', rounds: [], final: null },
+  }
+};
+
+const MOCK_COMPLETED = JSON.parse(JSON.stringify(MOCK_RUNNING));
+MOCK_COMPLETED.status = 'completed';
+MOCK_COMPLETED.current_stage = null;
+MOCK_COMPLETED.elapsed = '4m 32s';
+MOCK_COMPLETED.stats = { calls: 47, elapsed: '4m 32s', rounds: 1.4, disputes: 0, tokens_in: 56000, tokens_out: 24000 };
+MOCK_COMPLETED.stages.review = {
+  status: 'passed',
+  rounds: [{
+    round: 2, verdict: 'pass',
+    claude: '审查通过', codex: '审查通过',
+    merged: '## Review 通过\n\n所有关键路径已验证：\n- API 契约一致\n- 错误处理完整\n- 性能在预期范围内',
+    claude_crit: 'VERDICT: PASS', codex_crit: 'VERDICT: PASS',
+  }], final: 'Reviewed'
+};
+MOCK_COMPLETED.stages.test = {
+  status: 'passed',
+  rounds: [{
+    round: 1, verdict: 'pass',
+    claude: '测试用例设计：覆盖正常路径、边界条件、异常路径',
+    codex: 'Test code generated, all 47 cases passing',
+    merged: '## 测试结果\n\n```\n47 passed, 0 failed, 0 skipped\nCoverage: 87%\n```',
+    claude_crit: 'VERDICT: PASS', codex_crit: 'VERDICT: PASS',
+  }], final: 'All tests passing'
+};
+MOCK_COMPLETED.stages.retrospective = {
+  status: 'passed',
+  rounds: [{
+    round: 1, verdict: 'pass',
+    claude: '回溯：所有产物对齐初始需求',
+    codex: 'Retrospective check passed',
+    merged: '## 回溯检查\n\n### 对照初始需求\n- ✓ 实时数据看板\n- ✓ 多维度切片\n- ✓ 异常告警\n- ✓ 用户自定义 widgets\n\n### 偏差\n- 历史数据回放 — 未实现，已记入 v1.1 backlog\n\n### 结论\n核心功能完整，可以发布。',
+    claude_crit: 'VERDICT: PASS', codex_crit: 'VERDICT: PASS',
+  }], final: 'Retrospective complete, ready to ship'
+};
+
+const MOCK_DISPUTE = JSON.parse(JSON.stringify(MOCK_COMPLETED));
+MOCK_DISPUTE.stats.disputes = 1;
+MOCK_DISPUTE.stages.implement.status = 'dispute';
+MOCK_DISPUTE.stages.implement.rounds = [
+  { round: 1, verdict: 'fail', claude: 'v1', codex: 'v1', merged: 'm1', claude_crit: 'NEEDS_REVISION', codex_crit: 'NEEDS_REVISION' },
+  { round: 2, verdict: 'fail', claude: 'v2', codex: 'v2', merged: 'm2', claude_crit: 'NEEDS_REVISION', codex_crit: 'PASS' },
+  { round: 3, verdict: 'fail', claude: 'v3', codex: 'v3',
+    merged: '## Implementation v3 (force-passed)\n\n经过 3 轮迭代未达共识，强制采纳 v3。\n\n**Claude 仍坚持的异议**：\n- 错误处理过于乐观\n- 缺少限流逻辑\n\n**Codex 已通过**\n\n标记为需要 retrospective 重点关注。',
+    claude_crit: 'VERDICT: NEEDS_REVISION (3rd round)', codex_crit: 'VERDICT: PASS' },
+];
+
+let currentMock = MOCK_RUNNING;
+let expandedStages = new Set(['plan', 'review']);
+let activeRounds = {};
+
+function statusIcon(status) {
+  if (status === 'passed') return '✓';
+  if (status === 'running') return '⋯';
+  if (status === 'fail') return '✗';
+  if (status === 'dispute') return '!';
+  return '○';
+}
+
+function renderPipeline() {
+  const strip = document.getElementById('stagesStrip');
+  strip.innerHTML = STAGES.map((s, i) => {
+    const stage = currentMock.stages[s.name];
+    const status = stage.status;
+    const roundCount = stage.rounds?.length || 0;
+    const meta = status === 'running' ? `round ${currentMock.current_round}/3`
+              : status === 'pending' ? '–'
+              : `${roundCount} round${roundCount > 1 ? 's' : ''}`;
+    return `
+      <div class="stage-pill ${status}" onclick="toggleStage('${s.name}')">
+        <div class="stage-dot">${statusIcon(status)}</div>
+        <div class="stage-name">${s.label}</div>
+        <div class="stage-meta">${meta}</div>
+      </div>
+    `;
+  }).join('');
+}
+
+function renderStages() {
+  const list = document.getElementById('stagesList');
+  list.innerHTML = STAGES.map(s => {
+    const stage = currentMock.stages[s.name];
+    const expanded = expandedStages.has(s.name);
+    const status = stage.status;
+    const roundCount = stage.rounds.length;
+
+    let bodyHTML = '';
+    if (status === 'pending') {
+      bodyHTML = `<div class="pending-msg">等待上游阶段完成</div>`;
+    } else if (status === 'running' && roundCount === 0) {
+      bodyHTML = `<div class="pending-msg">阶段刚启动，等待第一轮产出…</div>`;
+    } else {
+      const activeRound = activeRounds[s.name] ?? roundCount - 1;
+      bodyHTML = `
+        <div class="rounds-tabs">
+          ${stage.rounds.map((r, i) => `
+            <button class="round-tab ${i === activeRound ? 'active' : ''}"
+                    onclick="event.stopPropagation(); setActiveRound('${s.name}', ${i})">
+              Round ${r.round}
+              <span class="round-verdict ${r.verdict}">${r.verdict.toUpperCase()}</span>
+            </button>
+          `).join('')}
+        </div>
+        ${renderRound(stage.rounds[activeRound])}
+        ${stage.final && status !== 'running' ? `
+          <div class="final-output">
+            <div class="panel-header"><span>✓ Final output</span></div>
+            <div class="panel-content">${md.render(stage.rounds[stage.rounds.length-1].merged)}</div>
+          </div>
+        ` : ''}
+      `;
+    }
+
+    return `
+      <div class="stage-card ${expanded ? 'expanded' : ''}">
+        <div class="stage-card-header" onclick="toggleStage('${s.name}')">
+          <div class="stage-icon ${status}">${statusIcon(status)}</div>
+          <div class="stage-card-title">${s.label}</div>
+          <div class="stage-card-sub">
+            ${status === 'pending' ? 'Pending' :
+              status === 'running' ? `Round ${currentMock.current_round}/3 in progress` :
+              status === 'dispute' ? `Force-passed after ${roundCount} rounds` :
+              `Passed in round ${stage.rounds[stage.rounds.length-1]?.round}`}
+          </div>
+          <div class="stage-spacer"></div>
+          <span class="badge ${status}">
+            ${status === 'running' ? '<span class="dot"></span>' : ''}
+            ${status === 'passed' ? 'PASS' : status.toUpperCase()}
+          </span>
+          <span class="stage-toggle">▶</span>
+        </div>
+        <div class="stage-card-body">${bodyHTML}</div>
+      </div>
+    `;
+  }).join('');
+}
+
+function renderRound(round) {
+  if (!round) return '';
+  return `
+    <div class="round-grid">
+      <div class="panel">
+        <div class="panel-header claude">Claude · independent thinking</div>
+        <div class="panel-content">${md.render(round.claude)}</div>
+      </div>
+      <div class="panel">
+        <div class="panel-header codex">Codex · independent thinking</div>
+        <div class="panel-content">${md.render(round.codex)}</div>
+      </div>
+      <div class="panel merged full">
+        <div class="panel-header"><span>Synthesizer · merged output</span></div>
+        <div class="panel-content">${md.render(round.merged)}</div>
+      </div>
+      <div class="panel ${round.claude_crit.includes('PASS') ? 'review-pass' : 'review-fail'}">
+        <div class="panel-header claude">Claude review
+          <span class="verdict-badge ${round.claude_crit.includes('PASS') ? 'pass' : 'fail'}">
+            ${round.claude_crit.includes('PASS') ? 'PASS' : 'NEEDS REVISION'}
+          </span>
+        </div>
+        <div class="panel-content">${md.render(round.claude_crit)}</div>
+      </div>
+      <div class="panel ${round.codex_crit.includes('PASS') ? 'review-pass' : 'review-fail'}">
+        <div class="panel-header codex">Codex review
+          <span class="verdict-badge ${round.codex_crit.includes('PASS') ? 'pass' : 'fail'}">
+            ${round.codex_crit.includes('PASS') ? 'PASS' : 'NEEDS REVISION'}
+          </span>
+        </div>
+        <div class="panel-content">${md.render(round.codex_crit)}</div>
+      </div>
+    </div>
+  `;
+}
+
+function renderActivity() {
+  const sec = document.getElementById('activitySection');
+  sec.style.display = currentMock.status === 'running' ? '' : 'none';
+  if (currentMock.status === 'running') {
+    document.getElementById('activityTitle').textContent =
+      `Currently running: ${STAGES.find(s => s.name === currentMock.current_stage)?.label} · round ${currentMock.current_round} of 3`;
+  }
+}
+
+function renderHeader() {
+  const badge = document.getElementById('statusBadge');
+  badge.className = 'badge ' + (currentMock.status === 'running' ? 'running' : 'pass');
+  document.getElementById('statusText').textContent =
+    currentMock.status === 'running' ? 'Running' :
+    currentMock.status === 'completed' ? 'Completed' : currentMock.status;
+  document.getElementById('elapsed').textContent = currentMock.elapsed;
+}
+
+function renderStats() {
+  const s = currentMock.stats;
+  document.getElementById('statCalls').textContent = s.calls;
+  document.getElementById('statElapsed').textContent = s.elapsed;
+  document.getElementById('statRounds').textContent = s.rounds.toFixed(1);
+  document.getElementById('statDisputes').textContent = s.disputes;
+  document.getElementById('statTokens').textContent = (s.tokens_in / 1000).toFixed(0) + 'k';
+  document.querySelector('#statTokens + .stat-sub').textContent =
+    `${(s.tokens_in/1000).toFixed(0)}k in / ${(s.tokens_out/1000).toFixed(0)}k out`;
+}
+
+function renderAll() {
+  renderHeader();
+  renderPipeline();
+  renderActivity();
+  renderStages();
+  renderStats();
+}
+
+function toggleStage(name) {
+  if (expandedStages.has(name)) expandedStages.delete(name);
+  else expandedStages.add(name);
+  renderStages();
+}
+
+function setActiveRound(stageName, idx) {
+  activeRounds[stageName] = idx;
+  renderStages();
+}
+
+document.querySelectorAll('.mock-controls button[data-state]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.mock-controls button').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    const state = btn.dataset.state;
+    currentMock = state === 'completed' ? MOCK_COMPLETED :
+                  state === 'dispute' ? MOCK_DISPUTE : MOCK_RUNNING;
+    expandedStages = new Set(['plan']);
+    activeRounds = {};
+    renderAll();
+  });
+});
+
+renderAll();
+</script>
+</body>
+</html>
