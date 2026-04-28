@@ -2,3 +2,8 @@ __pycache__/
 *.py[cod]
 .pytest_cache/
 .worktrees/
+runs/
+dist/
+build/
+*.egg-info/
+.coverage

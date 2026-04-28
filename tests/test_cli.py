@@ -34,8 +34,8 @@ def test_status_shows_current_phase_and_gate(tmp_path):
     result = CliRunner().invoke(app, ["status", run.run_id, "--runs-dir", str(tmp_path)])
 
     assert result.exit_code == 0
-    assert "brainstorm" in result.output
-    assert "option_scoring_done" in result.output
+    assert "spec" in result.output
+    assert "spec_approved" in result.output
 
 
 def test_resume_shows_restored_run(tmp_path):

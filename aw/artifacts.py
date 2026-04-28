@@ -12,3 +12,7 @@ def write_artifact(run_path: Path, key: str, content: str, relative_path: str) -
     artifacts = state.setdefault("artifacts", {})
     artifacts[key] = relative_path
     state_path.write_text(json.dumps(state, indent=2) + "\n", encoding="utf-8")
+
+
+def read_artifact(run_path: Path, relative_path: str) -> str:
+    return (run_path / relative_path).read_text(encoding="utf-8")
