@@ -17,7 +17,7 @@ The current implementation is the P0 skeleton: local file-backed runs, determini
   - `artifacts/plan.md`
 - Records user approvals in `evidence/approvals.jsonl`.
 - Records command evidence in `evidence/commands.jsonl`.
-- Supports `help`, `status`, `resume`, `show`, `write`, and `evidence` commands.
+- Supports `help`, `status`, `resume`, `abort`, `show`, `write`, and `evidence` commands.
 
 ## Quick Start
 
@@ -41,6 +41,7 @@ aw> record-evidence pytest -q
 aw> runs
 aw> resume run-YYYYMMDD-HHMMSS
 aw> evidence
+aw> abort
 aw> exit
 ```
 
@@ -51,6 +52,7 @@ python -m aw.cli start "build a local-first note taking CLI"
 python -m aw.cli runs
 python -m aw.cli status run-YYYYMMDD-HHMMSS
 python -m aw.cli resume run-YYYYMMDD-HHMMSS
+python -m aw.cli abort run-YYYYMMDD-HHMMSS
 python -m aw.cli show spec run-YYYYMMDD-HHMMSS
 python -m aw.cli approve run-YYYYMMDD-HHMMSS
 python -m aw.cli write plan run-YYYYMMDD-HHMMSS

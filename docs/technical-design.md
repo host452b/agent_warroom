@@ -281,7 +281,7 @@ Dashboard displays:
 - generate or capture `plan-option-matrix.md`
 - write `plan.md` and approve gate
 - record one evidence command
-- `status`, `show spec`, `show plan`, `evidence`, `resume`
+- `status`, `show spec`, `show plan`, `evidence`, `resume`, `abort`
 
 ### Phase 0 — Evaluation Harness
 

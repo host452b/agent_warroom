@@ -129,6 +129,25 @@ def save_state(runs_dir: Path, run_id: str, state: dict) -> None:
     _write_json(runs_dir / run_id / "state.json", state)
 
 
+def abort_run(runs_dir: Path, run_id: str, now: str) -> dict:
+    run_path = runs_dir / run_id
+    state = load_state(runs_dir, run_id)
+    state["status"] = "aborted"
+    if isinstance(state.get("current_gate"), dict):
+        state["current_gate"]["status"] = "aborted"
+        state["current_gate"]["missing"] = []
+    save_state(runs_dir, run_id, state)
+
+    manifest_path = run_path / "run-manifest.json"
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    manifest["status"] = "aborted"
+    manifest["updated_at"] = now
+    _write_json(manifest_path, manifest)
+
+    append_event(run_path, {"ts": now, "event": "run_aborted", "run_id": run_id})
+    return state
+
+
 def approve_gate(runs_dir: Path, run_id: str, now: str) -> dict:
     run_path = runs_dir / run_id
     state = load_state(runs_dir, run_id)

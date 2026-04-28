@@ -31,7 +31,7 @@ Natural language input
   -> plan.md
   -> plan approval
   -> record one evidence command
-  -> status / evidence / resume
+  -> status / evidence / resume / abort
 ```
 
 ## Interactive Commands
@@ -68,6 +68,7 @@ P0 command subset:
 | `show plan` | print `artifacts/plan.md` |
 | `evidence` | show recorded evidence |
 | `resume <run_id>` | restore existing run |
+| `abort` | mark the current run aborted |
 | `exit` | exit without losing run state |
 
 Shortcut commands:

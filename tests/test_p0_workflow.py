@@ -116,6 +116,24 @@ def test_interactive_shell_records_command_evidence():
     assert "passed: pytest -q" in result.output
 
 
+def test_interactive_shell_aborts_active_run():
+    runner = CliRunner()
+
+    with runner.isolated_filesystem():
+        run = create_run(Path("runs"), "build notes", "2026-04-27T15:30:00+08:00")
+        result = runner.invoke(
+            app,
+            [],
+            input=f"resume {run.run_id}\nabort\nstatus\nexit\n",
+        )
+        state_text = (Path("runs") / run.run_id / "state.json").read_text()
+
+    assert result.exit_code == 0
+    assert f"Aborted {run.run_id}" in result.output
+    assert "Status: aborted" in result.output
+    assert '"status": "aborted"' in state_text
+
+
 def test_show_spec_prints_spec_artifact(tmp_path):
     run_id = "run-20260427-153000"
     CliRunner().invoke(
@@ -249,3 +267,43 @@ def test_record_evidence_updates_evidence_output(tmp_path):
     assert evidence.exit_code == 0
     assert "pytest -q" in evidence.output
     assert "passed" in evidence.output
+
+
+def test_abort_command_marks_run_aborted(tmp_path):
+    run_id = "run-20260427-153000"
+    runner = CliRunner()
+    runner.invoke(
+        app,
+        [
+            "start",
+            "build notes",
+            "--runs-dir",
+            str(tmp_path),
+            "--now",
+            "2026-04-27T15:30:00+08:00",
+        ],
+    )
+
+    result = runner.invoke(
+        app,
+        [
+            "abort",
+            run_id,
+            "--runs-dir",
+            str(tmp_path),
+            "--now",
+            "2026-04-27T15:31:00+08:00",
+        ],
+    )
+
+    assert result.exit_code == 0
+    run_path = tmp_path / run_id
+    assert f"Aborted {run_id}" in result.output
+    assert '"status": "aborted"' in (run_path / "state.json").read_text()
+    assert '"status": "aborted"' in (run_path / "run-manifest.json").read_text()
+    assert "run_aborted" in (run_path / "events.jsonl").read_text()
+
+    status_result = runner.invoke(app, ["status", run_id, "--runs-dir", str(tmp_path)])
+
+    assert status_result.exit_code == 0
+    assert "Status: aborted" in status_result.output

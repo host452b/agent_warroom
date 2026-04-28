@@ -6,7 +6,7 @@ import typer
 
 from aw.artifacts import read_artifact
 from aw.evidence import record_command
-from aw.runs import approve_gate, create_run, list_runs, load_state, write_plan_artifacts
+from aw.runs import abort_run, approve_gate, create_run, list_runs, load_state, write_plan_artifacts
 
 app = typer.Typer(no_args_is_help=False, invoke_without_command=True)
 show_app = typer.Typer()
@@ -58,6 +58,7 @@ def run_shell(runs_dir: Path = Path("runs")) -> None:
             typer.echo("  approve")
             typer.echo("  record-evidence <command>")
             typer.echo("  evidence")
+            typer.echo("  abort")
             typer.echo("  exit")
             typer.echo("Or type a new requirement to start a run.")
             continue
@@ -117,6 +118,12 @@ def run_shell(runs_dir: Path = Path("runs")) -> None:
             else:
                 typer.echo("No active run")
             continue
+        if line == "abort":
+            if current_run_id:
+                abort(current_run_id, runs_dir, None)
+            else:
+                typer.echo("No active run")
+            continue
 
         run = create_run(runs_dir, line, _now(None))
         current_run_id = run.run_id
@@ -144,6 +151,7 @@ def status(
     """Show current run status."""
     state = load_state(runs_dir, run_id)
     typer.echo(f"Run: {state['run_id']}")
+    typer.echo(f"Status: {state['status']}")
     typer.echo(f"Phase: {state['current_phase']}")
     typer.echo(f"Gate: {_gate_label(state['current_gate'])}")
     if isinstance(state["current_gate"], dict):
@@ -197,6 +205,17 @@ def approve(
     """Approve the current user gate."""
     state = approve_gate(runs_dir, run_id, _now(now))
     typer.echo(f"Approved {_gate_label(state['current_gate'])}")
+
+
+@app.command()
+def abort(
+    run_id: str,
+    runs_dir: Path = typer.Option(Path("runs"), "--runs-dir"),
+    now: str | None = typer.Option(None, "--now"),
+) -> None:
+    """Abort a run."""
+    abort_run(runs_dir, run_id, _now(now))
+    typer.echo(f"Aborted {run_id}")
 
 
 @write_app.command("plan")
