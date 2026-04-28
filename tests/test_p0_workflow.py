@@ -46,6 +46,18 @@ def test_interactive_shell_creates_run_from_natural_language():
     assert "# Spec" in result.output
 
 
+def test_interactive_shell_prints_help_without_creating_run():
+    runner = CliRunner()
+
+    with runner.isolated_filesystem():
+        result = runner.invoke(app, [], input="help\nexit\n")
+
+    assert result.exit_code == 0
+    assert "Commands:" in result.output
+    assert "record-evidence <command>" in result.output
+    assert "Started run-" not in result.output
+
+
 def test_interactive_shell_resumes_existing_run():
     runner = CliRunner()
 

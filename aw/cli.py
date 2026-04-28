@@ -38,7 +38,7 @@ def root(ctx: typer.Context) -> None:
 
 def run_shell(runs_dir: Path = Path("runs")) -> None:
     current_run_id: str | None = None
-    typer.echo("aw interactive shell. Type a requirement or `exit`.")
+    typer.echo("aw interactive shell. Type a requirement, `help`, or `exit`.")
     while True:
         try:
             line = typer.prompt("aw").strip()
@@ -46,6 +46,20 @@ def run_shell(runs_dir: Path = Path("runs")) -> None:
             typer.echo()
             return
         if not line:
+            continue
+        if line == "help":
+            typer.echo("Commands:")
+            typer.echo("  status")
+            typer.echo("  runs")
+            typer.echo("  resume <run_id>")
+            typer.echo("  show spec")
+            typer.echo("  show plan")
+            typer.echo("  write plan")
+            typer.echo("  approve")
+            typer.echo("  record-evidence <command>")
+            typer.echo("  evidence")
+            typer.echo("  exit")
+            typer.echo("Or type a new requirement to start a run.")
             continue
         if line == "exit":
             typer.echo("Bye")
