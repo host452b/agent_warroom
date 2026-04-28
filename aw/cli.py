@@ -90,6 +90,13 @@ def run_shell(runs_dir: Path = Path("runs")) -> None:
             else:
                 typer.echo("No active run")
             continue
+        if line.startswith("record-evidence "):
+            if current_run_id:
+                command = line.split(maxsplit=1)[1].strip()
+                record_evidence(current_run_id, command, "passed", "", runs_dir, None)
+            else:
+                typer.echo("No active run")
+            continue
         if line == "evidence":
             if current_run_id:
                 evidence(current_run_id, runs_dir)
