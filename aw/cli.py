@@ -6,7 +6,7 @@ import typer
 
 from aw.artifacts import read_artifact
 from aw.evidence import record_command
-from aw.runs import approve_gate, create_run, load_state, write_plan_artifacts
+from aw.runs import approve_gate, create_run, list_runs, load_state, write_plan_artifacts
 
 app = typer.Typer(no_args_is_help=False, invoke_without_command=True)
 show_app = typer.Typer()
@@ -55,6 +55,9 @@ def run_shell(runs_dir: Path = Path("runs")) -> None:
                 status(current_run_id, runs_dir)
             else:
                 typer.echo("No active run")
+            continue
+        if line == "runs":
+            runs(runs_dir)
             continue
         if line.startswith("resume "):
             run_id = line.split(maxsplit=1)[1].strip()
@@ -137,6 +140,17 @@ def resume(
     state = load_state(runs_dir, run_id)
     typer.echo(f"Resumed {state['run_id']}")
     typer.echo(f"Phase: {state['current_phase']}")
+
+
+@app.command()
+def runs(runs_dir: Path = typer.Option(Path("runs"), "--runs-dir")) -> None:
+    """List historical runs."""
+    entries = list_runs(runs_dir)
+    if not entries:
+        typer.echo("No runs found")
+        return
+    for entry in entries:
+        typer.echo(f"{entry['run_id']}  {entry['status']}  {entry['requirement']}")
 
 
 @show_app.command("spec")

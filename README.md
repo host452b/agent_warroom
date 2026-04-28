@@ -36,6 +36,7 @@ aw> show spec
 aw> approve
 aw> write plan
 aw> show plan
+aw> runs
 aw> resume run-YYYYMMDD-HHMMSS
 aw> evidence
 aw> exit
@@ -45,6 +46,7 @@ Use the printed run id when calling direct commands:
 
 ```bash
 python -m aw.cli start "build a local-first note taking CLI"
+python -m aw.cli runs
 python -m aw.cli status run-YYYYMMDD-HHMMSS
 python -m aw.cli resume run-YYYYMMDD-HHMMSS
 python -m aw.cli show spec run-YYYYMMDD-HHMMSS
