@@ -115,6 +115,16 @@ def load_state(runs_dir: Path, run_id: str) -> dict:
     return json.loads(state_path.read_text(encoding="utf-8"))
 
 
+def list_runs(runs_dir: Path) -> list[dict]:
+    if not runs_dir.exists():
+        return []
+    manifests = sorted(runs_dir.glob("run-*/run-manifest.json"))
+    return [
+        json.loads(manifest.read_text(encoding="utf-8"))
+        for manifest in manifests
+    ]
+
+
 def save_state(runs_dir: Path, run_id: str, state: dict) -> None:
     _write_json(runs_dir / run_id / "state.json", state)
 

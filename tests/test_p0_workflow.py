@@ -63,6 +63,31 @@ def test_interactive_shell_resumes_existing_run():
     assert "# Spec" in result.output
 
 
+def test_runs_command_lists_existing_runs(tmp_path):
+    create_run(tmp_path, "build notes", "2026-04-27T15:30:00+08:00")
+    create_run(tmp_path, "build tasks", "2026-04-27T15:31:00+08:00")
+
+    result = CliRunner().invoke(app, ["runs", "--runs-dir", str(tmp_path)])
+
+    assert result.exit_code == 0
+    assert "run-20260427-153000" in result.output
+    assert "build notes" in result.output
+    assert "run-20260427-153100" in result.output
+    assert "build tasks" in result.output
+
+
+def test_interactive_shell_lists_existing_runs():
+    runner = CliRunner()
+
+    with runner.isolated_filesystem():
+        create_run(Path("runs"), "build notes", "2026-04-27T15:30:00+08:00")
+        result = runner.invoke(app, [], input="runs\nexit\n")
+
+    assert result.exit_code == 0
+    assert "run-20260427-153000" in result.output
+    assert "build notes" in result.output
+
+
 def test_show_spec_prints_spec_artifact(tmp_path):
     run_id = "run-20260427-153000"
     CliRunner().invoke(
