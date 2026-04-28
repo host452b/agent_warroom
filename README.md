@@ -36,6 +36,7 @@ aw> show spec
 aw> approve
 aw> write plan
 aw> show plan
+aw> record-evidence pytest -q
 aw> runs
 aw> resume run-YYYYMMDD-HHMMSS
 aw> evidence

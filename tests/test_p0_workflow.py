@@ -88,6 +88,22 @@ def test_interactive_shell_lists_existing_runs():
     assert "build notes" in result.output
 
 
+def test_interactive_shell_records_command_evidence():
+    runner = CliRunner()
+
+    with runner.isolated_filesystem():
+        run = create_run(Path("runs"), "build notes", "2026-04-27T15:30:00+08:00")
+        result = runner.invoke(
+            app,
+            [],
+            input=f"resume {run.run_id}\nrecord-evidence pytest -q\nevidence\nexit\n",
+        )
+
+    assert result.exit_code == 0
+    assert f"Recorded evidence for {run.run_id}" in result.output
+    assert "passed: pytest -q" in result.output
+
+
 def test_show_spec_prints_spec_artifact(tmp_path):
     run_id = "run-20260427-153000"
     CliRunner().invoke(
